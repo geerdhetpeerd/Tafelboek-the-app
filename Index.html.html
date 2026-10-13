@@ -1,0 +1,690 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Tafelboek</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=Young+Serif&display=swap">
+<style>
+/* Layout: één smalle kolom als een menukaart. Lijst van restaurants, tik op een restaurant voor de gerechten met score. */
+:root {
+  --bg: #f2f4f0;
+  --surface: #ffffff;
+  --fg: #18211c;
+  --muted: #5e6b63;
+  --line: #d9dfd8;
+  --accent: #8e1f45;
+  --accent-fg: #ffffff;
+  --star: #c98a12;
+  --good: #2f6b45;
+  --warn: #a5461f;
+  --overlay: rgba(18, 28, 22, 0.45);
+  --font-display: "Young Serif", Georgia, "Times New Roman", serif;
+  --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121815;
+    --surface: #1b231f;
+    --fg: #e9eeea;
+    --muted: #98a59c;
+    --line: #2c3732;
+    --accent: #e58aa8;
+    --accent-fg: #2a0a15;
+    --star: #e3b341;
+    --good: #7cc59a;
+    --warn: #e8996f;
+    --overlay: rgba(0, 0, 0, 0.6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121815;
+  --surface: #1b231f;
+  --fg: #e9eeea;
+  --muted: #98a59c;
+  --line: #2c3732;
+  --accent: #e58aa8;
+  --accent-fg: #2a0a15;
+  --star: #e3b341;
+  --good: #7cc59a;
+  --warn: #e8996f;
+  --overlay: rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.45;
+  padding-inline: 16px;
+  padding-block: 0 112px;
+}
+.wrap { max-width: 640px; margin-inline: auto; }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Header */
+.top {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 5;
+  background: var(--bg);
+  padding-block: 20px 12px;
+  display: grid;
+  gap: 12px;
+}
+.brand { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+h1 { font-family: var(--font-display); font-weight: 400; font-size: 2rem; line-height: 1.1; margin: 0; letter-spacing: -0.01em; }
+.count { color: var(--muted); font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+.search {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 11px 14px;
+}
+.search::placeholder { color: var(--muted); }
+
+/* Lijst */
+.list { display: grid; gap: 10px; padding-top: 4px; }
+.card {
+  text-align: left;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.card:hover { border-color: var(--accent); }
+.card h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.25rem; line-height: 1.2; margin: 0; overflow-wrap: anywhere; }
+.meta { color: var(--muted); font-size: 0.875rem; }
+.best { display: flex; align-items: baseline; gap: 8px; font-size: 0.9375rem; min-width: 0; }
+.best span.dish { overflow-wrap: anywhere; }
+.hit { font-size: 0.875rem; color: var(--muted); overflow-wrap: anywhere; }
+.hit b { color: var(--fg); font-weight: 600; }
+
+.stars { white-space: nowrap; letter-spacing: 1px; color: var(--star); flex: none; }
+.stars .off { opacity: 0.25; }
+
+/* Detail */
+.back {
+  background: none;
+  border: 0;
+  padding: 6px 0;
+  color: var(--accent);
+  font-weight: 600;
+  justify-self: start;
+}
+.head { display: grid; gap: 4px; padding-block: 4px 16px; }
+.head h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.75rem; line-height: 1.15; margin: 0; overflow-wrap: anywhere; }
+.dishes { display: grid; gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.dish {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--line);
+  padding: 14px 16px;
+  width: 100%;
+  min-width: 0;
+}
+.dish:first-child { border-top: 0; }
+.dish:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.dish-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.dish-name { font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
+.note { color: var(--muted); font-size: 0.9375rem; overflow-wrap: anywhere; }
+.tag { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.tag.again { color: var(--good); }
+.tag.skip { color: var(--warn); }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; padding-block: 16px 0; }
+
+/* Knoppen */
+.btn {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-weight: 600;
+}
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.btn.danger { color: var(--warn); }
+.btn.danger.armed { background: var(--warn); color: var(--bg); border-color: var(--warn); }
+.fab {
+  position: fixed;
+  right: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 6;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  padding: 14px 22px;
+  font-weight: 600;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+}
+
+/* Lege staat */
+.empty { padding-block: 32px; display: grid; gap: 12px; justify-items: start; }
+.empty h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.5rem; margin: 0; }
+.empty p { margin: 0; color: var(--muted); max-width: 46ch; }
+.notice { background: var(--surface); border: 1px solid var(--warn); border-radius: 10px; padding: 12px 14px; color: var(--warn); }
+
+/* Formulier */
+.overlay { position: fixed; inset: 0; z-index: 20; background: var(--overlay); display: flex; align-items: flex-end; justify-content: center; }
+.sheet {
+  width: 100%;
+  max-width: 560px;
+  max-height: 92%;
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: 18px 18px 0 0;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+  display: grid;
+  gap: 14px;
+}
+.sheet h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.375rem; margin: 0; }
+.field { display: grid; gap: 6px; min-width: 0; }
+.field label, .field .lbl { font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.field input, .field textarea {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 11px 12px;
+}
+.field textarea { resize: vertical; min-height: 72px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.score { display: flex; gap: 6px; }
+.score button {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 10px 0;
+  flex: 1;
+  color: var(--muted);
+}
+.score button.on { color: var(--star); border-color: var(--star); }
+.hint { font-size: 0.875rem; color: var(--muted); min-height: 1.3em; }
+.err { color: var(--warn); font-size: 0.9375rem; min-height: 1.3em; }
+.sheet-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.sheet-actions .grow { flex: 1; }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  z-index: 30;
+  background: var(--fg);
+  color: var(--bg);
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 0.9375rem;
+  max-width: calc(100% - 32px);
+}
+
+@media (max-width: 420px) { .two { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: no-preference) {
+  .card, .dish, .btn { transition: border-color 0.15s, background-color 0.15s; }
+}
+</style>
+
+<div class="wrap">
+  <header class="top" id="top">
+    <div class="brand">
+      <h1>Tafelboek</h1>
+      <span class="count" id="count"></span>
+    </div>
+    <input class="search" id="search" type="search" placeholder="Zoek restaurant, stad of gerecht" autocomplete="off" aria-label="Zoeken">
+  </header>
+  <main id="main"></main>
+</div>
+
+<button class="fab" id="fab" type="button">+ Gerecht toevoegen</button>
+
+<div class="overlay" id="overlay" hidden>
+  <form class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" novalidate>
+    <h2 id="sheet-title">Gerecht toevoegen</h2>
+    <div class="field">
+      <label for="f-restaurant">Restaurant</label>
+      <input id="f-restaurant" list="restaurants" autocomplete="off" placeholder="Bijvoorbeeld Brasserie De Hoek">
+      <datalist id="restaurants"></datalist>
+    </div>
+    <div class="field">
+      <label for="f-city">Stad (niet verplicht)</label>
+      <input id="f-city" autocomplete="off" placeholder="Bijvoorbeeld Gent">
+    </div>
+    <div class="field">
+      <label for="f-dish">Gerecht</label>
+      <input id="f-dish" autocomplete="off" placeholder="Bijvoorbeeld Steak tartaar">
+    </div>
+    <div class="field">
+      <span class="lbl" id="score-lbl">Score</span>
+      <div class="score" id="score" role="group" aria-labelledby="score-lbl"></div>
+      <div class="hint" id="score-hint"></div>
+    </div>
+    <div class="two">
+      <div class="field">
+        <label for="f-date">Datum</label>
+        <input id="f-date" type="date">
+      </div>
+    </div>
+    <div class="field">
+      <label for="f-note">Notitie (niet verplicht)</label>
+      <textarea id="f-note" placeholder="Bijvoorbeeld: zonder ui vragen, kleine portie"></textarea>
+    </div>
+    <div class="err" id="err" role="alert"></div>
+    <div class="sheet-actions">
+      <button class="btn primary grow" type="submit" id="save">Opslaan</button>
+      <button class="btn" type="button" id="cancel">Annuleren</button>
+      <button class="btn danger" type="button" id="del" hidden>Verwijder gerecht</button>
+    </div>
+  </form>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(function () {
+  var main = document.getElementById('main');
+  var search = document.getElementById('search');
+  var countEl = document.getElementById('count');
+  var fab = document.getElementById('fab');
+  var overlay = document.getElementById('overlay');
+  var sheet = document.getElementById('sheet');
+  var toastEl = document.getElementById('toast');
+
+  var col = null;
+  var storeState = 'loading'; // loading | ready | unavailable
+  var items = [];
+  var view = { type: 'list', id: null };
+  var query = '';
+  var sheetMode = null; // { edit: bool, restaurantId, dishId }
+  var score = 0;
+  var chain = Promise.resolve();
+
+  var SCORE_HINT = ['', 'Niet voor herhaling', 'Matig', 'Prima', 'Lekker', 'Top, zeker opnieuw bestellen'];
+
+  function h(tag, props) {
+    var e = document.createElement(tag);
+    var p = props || {};
+    Object.keys(p).forEach(function (k) {
+      var v = p[k];
+      if (v === false || v == null) return;
+      if (k === 'class') e.className = v;
+      else if (k === 'text') e.textContent = v;
+      else if (k.indexOf('on') === 0) e.addEventListener(k.slice(2), v);
+      else if (v === true) e.setAttribute(k, '');
+      else e.setAttribute(k, v);
+    });
+    for (var i = 2; i < arguments.length; i++) {
+      var kids = [].concat(arguments[i]);
+      for (var j = 0; j < kids.length; j++) {
+        var kid = kids[j];
+        if (kid == null || kid === false) continue;
+        e.append(kid.nodeType ? kid : document.createTextNode(kid));
+      }
+    }
+    return e;
+  }
+
+  function norm(s) {
+    return String(s || '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  }
+  function uid() {
+    try { if (crypto && crypto.randomUUID) return crypto.randomUUID(); } catch (e) {}
+    return 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+  function today() {
+    var d = new Date();
+    var m = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    return d.getFullYear() + '-' + m + '-' + day;
+  }
+  function fmtDate(s) {
+    if (!s) return '';
+    var d = new Date(s + 'T12:00:00');
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('nl-BE', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  function stars(n) {
+    var on = '★'.repeat(n);
+    var off = '★'.repeat(5 - n);
+    return h('span', { class: 'stars', 'aria-label': n + ' van 5' }, on, h('span', { class: 'off' }, off));
+  }
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+  function dishesOf(r) { return Array.isArray(r.dishes) ? r.dishes : []; }
+  function bestDish(r) {
+    var best = null;
+    dishesOf(r).forEach(function (d) {
+      if (!best || d.score > best.score || (d.score === best.score && (d.date || '') > (best.date || ''))) best = d;
+    });
+    return best;
+  }
+  function findRestaurant(id) {
+    for (var i = 0; i < items.length; i++) if (items[i].id === id) return items[i];
+    return null;
+  }
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.hidden = false;
+    clearTimeout(toast.t);
+    toast.t = setTimeout(function () { toastEl.hidden = true; }, 2600);
+  }
+  function enqueue(fn) {
+    var p = chain.then(fn);
+    chain = p.catch(function () {});
+    return p;
+  }
+
+  /* ---------- Weergave ---------- */
+  function render() {
+    var totalDishes = items.reduce(function (n, r) { return n + dishesOf(r).length; }, 0);
+    countEl.textContent = storeState === 'ready' && items.length
+      ? plural(items.length, 'restaurant', 'restaurants') + ' · ' + plural(totalDishes, 'gerecht', 'gerechten')
+      : '';
+    var dl = document.getElementById('restaurants');
+    dl.replaceChildren();
+    items.slice().sort(function (a, b) { return a.name.localeCompare(b.name); }).forEach(function (r) {
+      dl.append(h('option', { value: r.name }));
+    });
+
+    if (view.type === 'detail' && !findRestaurant(view.id) && storeState === 'ready') view = { type: 'list', id: null };
+    search.hidden = view.type !== 'list';
+    main.replaceChildren();
+    if (view.type === 'detail') renderDetail(); else renderList();
+  }
+
+  function renderList() {
+    if (storeState === 'unavailable') {
+      main.append(h('div', { class: 'notice', text: 'Opslaan is hier niet beschikbaar. Open Tafelboek in Claude terwijl je bent aangemeld, dan blijven je gerechten bewaard.' }));
+      return;
+    }
+    if (storeState === 'loading') {
+      main.append(h('p', { class: 'meta', text: 'Je dagboek wordt geopend…' }));
+      return;
+    }
+    if (!items.length) {
+      main.append(h('div', { class: 'empty' },
+        h('h2', { text: 'Nog geen restaurants' }),
+        h('p', { text: 'Voeg na je volgende etentje het restaurant, wat je at en een score toe. De volgende keer zie je meteen wat je er lekker vond.' }),
+        h('button', { class: 'btn primary', type: 'button', onclick: function () { openSheet(null); } }, 'Eerste gerecht toevoegen')
+      ));
+      return;
+    }
+    var q = norm(query);
+    var rows = items.slice().sort(function (a, b) { return (b.updatedAt || 0) - (a.updatedAt || 0); });
+    if (q) {
+      rows = rows.filter(function (r) {
+        return norm(r.name).indexOf(q) >= 0 || norm(r.city).indexOf(q) >= 0 ||
+          dishesOf(r).some(function (d) { return norm(d.name).indexOf(q) >= 0; });
+      });
+    }
+    if (!rows.length) {
+      main.append(h('p', { class: 'meta', text: 'Niets gevonden voor “' + query.trim() + '”.' }));
+      return;
+    }
+    var list = h('div', { class: 'list' });
+    rows.forEach(function (r) {
+      var ds = dishesOf(r);
+      var best = bestDish(r);
+      var metaParts = [];
+      if (r.city) metaParts.push(r.city);
+      metaParts.push(plural(ds.length, 'gerecht', 'gerechten'));
+      var card = h('button', { class: 'card', type: 'button', onclick: function () { view = { type: 'detail', id: r.id }; render(); window.scrollTo(0, 0); } },
+        h('h2', { text: r.name }),
+        h('div', { class: 'meta', text: metaParts.join(' · ') })
+      );
+      if (best) card.append(h('div', { class: 'best' }, stars(best.score), h('span', { class: 'dish', text: best.name })));
+      if (q) {
+        ds.filter(function (d) { return norm(d.name).indexOf(q) >= 0; }).slice(0, 3).forEach(function (d) {
+          card.append(h('div', { class: 'hit' }, 'Gerecht: ', h('b', { text: d.name }), ' · ' + d.score + '/5'));
+        });
+      }
+      list.append(card);
+    });
+    main.append(list);
+  }
+
+  function renderDetail() {
+    var r = findRestaurant(view.id);
+    if (!r) { main.append(h('p', { class: 'meta', text: 'Dit restaurant is niet gevonden.' })); return; }
+    var ds = dishesOf(r).slice().sort(function (a, b) {
+      return b.score - a.score || (b.date || '').localeCompare(a.date || '');
+    });
+    main.append(h('div', { class: 'head' },
+      h('button', { class: 'back', type: 'button', onclick: function () { view = { type: 'list', id: null }; render(); } }, '← Alle restaurants'),
+      h('h2', { text: r.name }),
+      h('div', { class: 'meta', text: (r.city ? r.city + ' · ' : '') + plural(ds.length, 'gerecht', 'gerechten') })
+    ));
+    if (!ds.length) {
+      main.append(h('p', { class: 'meta', text: 'Er staan nog geen gerechten bij dit restaurant.' }));
+    } else {
+      var box = h('div', { class: 'dishes' });
+      ds.forEach(function (d) {
+        var tag = d.score === 5 ? h('span', { class: 'tag again', text: 'Opnieuw bestellen' })
+          : d.score <= 2 ? h('span', { class: 'tag skip', text: 'Overslaan' }) : null;
+        var info = [fmtDate(d.date)].filter(Boolean).join('');
+        box.append(h('button', { class: 'dish', type: 'button', onclick: function () { openSheet({ restaurantId: r.id, dishId: d.id }); } },
+          h('div', { class: 'dish-row' }, h('span', { class: 'dish-name', text: d.name }), stars(d.score)),
+          tag,
+          d.note ? h('div', { class: 'note', text: d.note }) : null,
+          info ? h('div', { class: 'meta', text: info }) : null
+        ));
+      });
+      main.append(box);
+    }
+    var delBtn = h('button', { class: 'btn danger', type: 'button' }, 'Verwijder restaurant');
+    var armed = false;
+    delBtn.addEventListener('click', function () {
+      if (!armed) {
+        armed = true;
+        delBtn.classList.add('armed');
+        delBtn.textContent = 'Zeker weten? Tik nog eens';
+        setTimeout(function () { armed = false; delBtn.classList.remove('armed'); delBtn.textContent = 'Verwijder restaurant'; }, 4000);
+        return;
+      }
+      enqueue(function () { return col.doc(r.id).delete(); }).then(function () {
+        view = { type: 'list', id: null };
+        render();
+        toast('Restaurant verwijderd');
+      }).catch(function () { toast('Verwijderen is niet gelukt'); });
+    });
+    main.append(h('div', { class: 'actions' },
+      h('button', { class: 'btn primary', type: 'button', onclick: function () { openSheet({ restaurantId: r.id }); } }, 'Gerecht toevoegen'),
+      delBtn
+    ));
+  }
+
+  /* ---------- Formulier ---------- */
+  var elR = document.getElementById('f-restaurant');
+  var elC = document.getElementById('f-city');
+  var elD = document.getElementById('f-dish');
+  var elDate = document.getElementById('f-date');
+  var elN = document.getElementById('f-note');
+  var elErr = document.getElementById('err');
+  var elDel = document.getElementById('del');
+  var elHint = document.getElementById('score-hint');
+  var scoreBox = document.getElementById('score');
+
+  for (var i = 1; i <= 5; i++) {
+    (function (n) {
+      scoreBox.append(h('button', {
+        type: 'button', 'aria-label': n + ' van 5', 'aria-pressed': 'false', 'data-n': n,
+        onclick: function () { setScore(n); }
+      }, '★'));
+    })(i);
+  }
+  function setScore(n) {
+    score = n;
+    [].forEach.call(scoreBox.children, function (b) {
+      var on = Number(b.getAttribute('data-n')) <= n;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', String(Number(b.getAttribute('data-n')) === n));
+    });
+    elHint.textContent = SCORE_HINT[n] || '';
+  }
+
+  var delArmed = false;
+  function resetDel() {
+    delArmed = false;
+    elDel.classList.remove('armed');
+    elDel.textContent = 'Verwijder gerecht';
+  }
+
+  function openSheet(ctx) {
+    if (storeState !== 'ready') { toast('Opslaan is nu niet beschikbaar'); return; }
+    elErr.textContent = '';
+    resetDel();
+    var r = ctx && ctx.restaurantId ? findRestaurant(ctx.restaurantId) : null;
+    var d = null;
+    if (r && ctx.dishId) d = dishesOf(r).filter(function (x) { return x.id === ctx.dishId; })[0] || null;
+    if (!r && view.type === 'detail') r = findRestaurant(view.id);
+    sheetMode = { edit: !!d, restaurantId: r ? r.id : null, dishId: d ? d.id : null };
+    document.getElementById('sheet-title').textContent = d ? 'Gerecht aanpassen' : 'Gerecht toevoegen';
+    elR.value = r ? r.name : '';
+    elC.value = r ? (r.city || '') : '';
+    elD.value = d ? d.name : '';
+    elN.value = d ? (d.note || '') : '';
+    elDate.value = d && d.date ? d.date : today();
+    setScore(d ? d.score : 0);
+    elR.disabled = !!d;
+    elDel.hidden = !d;
+    overlay.hidden = false;
+    setTimeout(function () { (elR.value ? elD : elR).focus(); }, 30);
+  }
+  function closeSheet() {
+    overlay.hidden = true;
+    sheetMode = null;
+  }
+
+  elR.addEventListener('input', function () {
+    if (sheetMode && sheetMode.edit) return;
+    var key = norm(elR.value);
+    var match = items.filter(function (r) { return norm(r.name) === key; })[0];
+    if (match && match.city && !elC.value) elC.value = match.city;
+  });
+
+  sheet.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var rName = elR.value.trim();
+    var dName = elD.value.trim();
+    if (!rName) { elErr.textContent = 'Vul de naam van het restaurant in.'; elR.focus(); return; }
+    if (!dName) { elErr.textContent = 'Vul in wat je gegeten hebt.'; elD.focus(); return; }
+    if (!score) { elErr.textContent = 'Kies een score van 1 tot 5.'; return; }
+    elErr.textContent = '';
+    var mode = sheetMode;
+    var dish = {
+      id: mode.dishId || uid(),
+      name: dName,
+      score: score,
+      note: elN.value.trim(),
+      date: elDate.value || today()
+    };
+    var city = elC.value.trim();
+    var target = mode.restaurantId ? findRestaurant(mode.restaurantId) : null;
+    if (!target) {
+      var key = norm(rName);
+      target = items.filter(function (r) { return norm(r.name) === key; })[0] || null;
+    }
+    var saveBtn = document.getElementById('save');
+    saveBtn.disabled = true;
+    var job;
+    if (target) {
+      var tid = target.id;
+      job = enqueue(function () {
+        var cur = findRestaurant(tid) || target;
+        var ds = dishesOf(cur).slice();
+        var idx = -1;
+        for (var k = 0; k < ds.length; k++) if (ds[k].id === dish.id) idx = k;
+        if (idx >= 0) ds[idx] = dish; else ds.push(dish);
+        var patch = { dishes: ds, updatedAt: Date.now() };
+        if (city && !cur.city) patch.city = city;
+        return col.doc(tid).update(patch);
+      });
+    } else {
+      job = enqueue(function () {
+        return col.add({ name: rName, city: city, dishes: [dish], createdAt: Date.now(), updatedAt: Date.now() });
+      });
+    }
+    job.then(function () {
+      saveBtn.disabled = false;
+      closeSheet();
+      toast('Opgeslagen');
+    }).catch(function (e) {
+      saveBtn.disabled = false;
+      elErr.textContent = e && e.code === 'quota_exceeded'
+        ? 'Het dagboek zit vol. Verwijder eerst enkele restaurants.'
+        : 'Opslaan is niet gelukt. Probeer het zo meteen opnieuw.';
+    });
+  });
+
+  elDel.addEventListener('click', function () {
+    if (!delArmed) {
+      delArmed = true;
+      elDel.classList.add('armed');
+      elDel.textContent = 'Zeker weten? Tik nog eens';
+      return;
+    }
+    var mode = sheetMode;
+    enqueue(function () {
+      var cur = findRestaurant(mode.restaurantId);
+      if (!cur) return Promise.resolve();
+      var ds = dishesOf(cur).filter(function (x) { return x.id !== mode.dishId; });
+      return col.doc(cur.id).update({ dishes: ds, updatedAt: Date.now() });
+    }).then(function () {
+      closeSheet();
+      toast('Gerecht verwijderd');
+    }).catch(function () {
+      elErr.textContent = 'Verwijderen is niet gelukt.';
+    });
+  });
+
+  document.getElementById('cancel').addEventListener('click', closeSheet);
+  overlay.addEventListener('click', function (ev) { if (ev.target === overlay) closeSheet(); });
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && !overlay.hidden) closeSheet(); });
+  fab.addEventListener('click', function () { openSheet(null); });
+  search.addEventListener('input', function () { query = search.value; if (view.type === 'list') render(); });
+
+  /* ---------- Opslag ---------- */
+  async function init() {
+    render();
+    try {
+      if (!window.claude || !window.claude.use) throw new Error('no runtime');
+      var db = await window.claude.use('db');
+      var user = await window.claude.use('user');
+      var id = user ? await user.id() : null;
+      if (!db || !id) throw new Error('no store');
+      col = db.collection('data/users/' + id);
+      col.onSnapshot(function (snap) {
+        items = snap.docs.map(function (d) {
+          var data = d.data() || {};
+          data.id = d.id;
+          data.name = data.name || 'Zonder naam';
+          return data;
+        });
+        storeState = 'ready';
+        render();
+      }, function () {
+        storeState = 'unavailable';
+        render();
+      });
+    } catch (e) {
+      storeState = 'unavailable';
+      render();
+    }
+  }
+  init();
+})();
+</script>
+
+</body></html>
